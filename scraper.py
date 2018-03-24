@@ -9,9 +9,10 @@ from datetime import datetime, date
 tba_base_url = "https://www.thebluealliance.com/api/v3/"
 
 class MatchData:
-    def __init__(self, event_key, match_key, red_score, red_auto, blue_score, blue_auto):
+    def __init__(self, event_key, match_key, week, red_score, red_auto, blue_score, blue_auto):
         self.event = event_key
         self.match = match_key
+        self.week = week
 
         self.red_score = red_score
         self.red_auto = red_auto
@@ -23,26 +24,36 @@ class MatchData:
         self.winners_match = self.winner == self.auto_winner
 
 
+class Event:
+    def __init__(self, key, week, start_date, end_date):
+        self.key = key
+        self.week = week
+
+        self.start_date = start_date
+        self.end_date = end_date
+
+
 def get_completed_events(year):
     current_date = date.today()
 
-    request_url = tba_base_url + "events/" + str(year) + "/simple"
+    request_url = tba_base_url + "events/" + str(year)
     payload = {"X-TBA-Auth-Key": config.api_key}
     request = requests.get(request_url, params=payload).json()
 
-    all_event_keys = []
+    all_events = []
     for event in request:
         event_end_date = datetime.strptime(event["end_date"], "%Y-%m-%d").date()
+        event_start_date = datetime.strptime(event["start_date"], "%Y-%m-%d").date()
         if event_end_date < current_date and 0 <= event["event_type"] <= 6:
-            all_event_keys.append(event["key"])
+            all_events.append(Event(event["key"], event["week"], event_start_date, event_end_date))
 
-    return all_event_keys
+    return all_events
 
 def get_all_matches(events):
     all_matches = []
     for event in events:
         print("Getting " + event)
-        request_url = tba_base_url + "event/" + event + "/matches"
+        request_url = tba_base_url + "event/" + event.key + "/matches"
         payload = {"X-TBA-Auth-Key": config.api_key}
         request = requests.get(request_url, params=payload).json()
 
@@ -53,7 +64,7 @@ def get_all_matches(events):
             blue_score = match["score_breakdown"]["blue"]["totalPoints"]
             blue_auto = match["score_breakdown"]["blue"]["autoPoints"]
 
-            all_matches.append(MatchData(event, match_key, red_score, red_auto, blue_score, blue_auto))
+            all_matches.append(MatchData(event, match_key, event.week, red_score, red_auto, blue_score, blue_auto))
 
     return all_matches
 
