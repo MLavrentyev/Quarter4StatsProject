@@ -52,7 +52,7 @@ def get_completed_events(year):
 def get_all_matches(events):
     all_matches = []
     for event in events:
-        print("Getting " + event)
+        print("Getting " + event.key)
         request_url = tba_base_url + "event/" + event.key + "/matches"
         payload = {"X-TBA-Auth-Key": config.api_key}
         request = requests.get(request_url, params=payload).json()
@@ -111,9 +111,11 @@ def export_matches(matches, path):
             writer.writerow(row)
 
 if __name__ == "__main__":
-    all_matches = import_matches("../data/all_matches.csv")
-    selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.07))
+    # all_matches = import_matches("../data/all_matches.csv")
+    all_events = get_completed_events(2018)
+    all_matches = get_all_matches(all_events)
+    export_matches(all_matches)
+    # selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.07))
+    # print(calc_sample_stats(selected_sample))
 
-    print(calc_sample_stats(selected_sample))
-
-    export_matches(selected_sample, "../data/sample.csv")
+    # export_matches(selected_sample, "../data/sample.csv")
