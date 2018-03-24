@@ -3,6 +3,7 @@ import csv
 import config
 import random
 import os
+from math import sqrt
 from datetime import datetime, date
 
 tba_base_url = "https://www.thebluealliance.com/api/v3/"
@@ -59,6 +60,19 @@ def get_all_matches(events):
 def pick_random_matches(matches, sample_size):
     return random.sample(matches, sample_size)
 
+def calc_sample_stats(matches):
+    n = len(matches)
+    num_success = 0
+    for match in matches:
+        if match.winners_match:
+            num_success += 1
+
+    p = num_success / n
+    q = 1 - p
+    std_err = sqrt(p*q/n)
+
+    return p, q, std_err, n
+
 def import_matches(path):
     if not os.path.exists(path):
         raise FileNotFoundError
@@ -87,4 +101,8 @@ def export_matches(matches, path):
 
 if __name__ == "__main__":
     all_matches = import_matches("../data/all_matches.csv")
-    print(vars(all_matches[0]))
+    selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.07))
+
+    print(calc_sample_stats(selected_sample))
+
+    export_matches(selected_sample, "../data/sample.csv")
