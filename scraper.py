@@ -19,9 +19,21 @@ class MatchData:
         self.blue_score = blue_score
         self.blue_auto = blue_auto
 
-        self.winner = "red" if red_score > blue_score else "blue"
-        self.auto_winner = "red" if red_auto > blue_auto else "blue"
-        self.winners_match = self.winner == self.auto_winner
+        if red_score > blue_score:
+            self.winner = "red"
+        elif blue_score > red_score:
+            self.winner = "blue"
+        else:
+            self.winner = "tie"
+
+        if red_auto > blue_auto:
+            self.auto_winner = "red"
+        elif blue_auto > red_auto:
+            self.auto_winner = "blue"
+        else:
+            self.auto_winner = "tie"
+
+        self.winners_match = self.winner == self.auto_winner and self.winner != "tie" and self.auto_winner != "tie"
 
 
 class Event:
@@ -64,7 +76,7 @@ def get_all_matches(events):
             blue_score = match["score_breakdown"]["blue"]["totalPoints"]
             blue_auto = match["score_breakdown"]["blue"]["autoPoints"]
 
-            all_matches.append(MatchData(event, match_key, event.week, red_score, red_auto, blue_score, blue_auto))
+            all_matches.append(MatchData(event.key, match_key, event.week, red_score, red_auto, blue_score, blue_auto))
 
     return all_matches
 
@@ -93,7 +105,7 @@ def import_matches(path):
         reader = csv.reader(file)
         next(reader)
         for row in reader:
-            matches.append(MatchData(*row[:6]))
+            matches.append(MatchData(*row[:7]))
 
     return matches
 
@@ -103,7 +115,8 @@ def export_matches(matches, path):
 
     with open(path, 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["event", "match", "red_score", "red_auto", "blue_score", "blue_auto",
+        writer.writerow(["event", "match", "week",
+                         "red_score", "red_auto", "blue_score", "blue_auto",
                          "winner", "auto_winner", "winners_match"])
 
         for match in matches:
@@ -114,8 +127,9 @@ if __name__ == "__main__":
     # all_matches = import_matches("../data/all_matches.csv")
     all_events = get_completed_events(2018)
     all_matches = get_all_matches(all_events)
-    export_matches(all_matches)
+    export_matches(all_matches, "../data/all_matches.csv")
+    #
     # selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.07))
     # print(calc_sample_stats(selected_sample))
-
+    #
     # export_matches(selected_sample, "../data/sample.csv")
