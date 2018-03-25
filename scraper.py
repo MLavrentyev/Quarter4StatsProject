@@ -98,16 +98,23 @@ def pick_random_matches(matches, sample_size):
 
 def calc_sample_stats(matches):
     n = len(matches)
-    num_success = 0
+    num_same_winners = 0
+    num_decided_by_auto = 0
     for match in matches:
         if match.winners_match:
-            num_success += 1
+            num_same_winners += 1
+        if match.decided_by_auto:
+            num_decided_by_auto += 1
 
-    p = num_success / n
-    q = 1 - p
-    std_err = sqrt(p*q/n)
+    p_same = num_same_winners / n
+    q_same = 1 - p_same
+    std_err_same = sqrt(p_same * q_same / n)
 
-    return p, q, std_err, n
+    p_dec = num_decided_by_auto / n
+    q_dec = 1 - p_dec
+    std_err_dec = sqrt(p_dec * q_dec / n)
+
+    return n, (p_same, q_same, std_err_same), (p_dec, q_dec, std_err_dec)
 
 
 def import_matches(path):
@@ -143,9 +150,9 @@ if __name__ == "__main__":
     all_matches = import_matches("../data/all_matches.csv")
     # all_events = get_completed_events(2018)
     # all_matches = get_all_matches(all_events)
-    export_matches(all_matches, "../data/all_matches.csv")
+    # export_matches(all_matches, "../data/all_matches.csv")
 
-    # selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.09))
-    # print(calc_sample_stats(selected_sample))
-    #
-    # export_matches(selected_sample, "../data/sample.csv")
+    selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.09))
+    print(calc_sample_stats(selected_sample))
+
+    export_matches(selected_sample, "../data/sample.csv")
