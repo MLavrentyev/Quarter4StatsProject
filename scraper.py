@@ -13,7 +13,7 @@ class MatchData:
     def __init__(self, event_key, match_key, week, red_score, red_auto, blue_score, blue_auto):
         self.event = event_key
         self.match = match_key
-        self.week = week
+        self.week = int(week)
 
         self.red_score = int(red_score)
         self.red_auto = int(red_auto)
@@ -117,6 +117,10 @@ def calc_sample_stats(matches):
     return n, (p_same, q_same, std_err_same), (p_dec, q_dec, std_err_dec)
 
 
+def filter_matches_by_week(matches, week):
+    return [match for match in matches if match.week == week]
+
+
 def import_matches(path):
     if not os.path.exists(path):
         raise FileNotFoundError
@@ -153,6 +157,8 @@ if __name__ == "__main__":
     # export_matches(all_matches, "../data/all_matches.csv")
 
     selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.09))
-    print(calc_sample_stats(selected_sample))
-
     export_matches(selected_sample, "../data/sample.csv")
+
+    for w in range(1, 8):
+        w_sample = filter_matches_by_week(selected_sample, w)
+        export_matches(w_sample, "../data/sample_w" + str(w) + ".csv")
