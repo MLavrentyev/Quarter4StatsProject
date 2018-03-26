@@ -156,9 +156,10 @@ if __name__ == "__main__":
     # all_matches = get_all_matches(all_events)
     # export_matches(all_matches, "../data/all_matches.csv")
 
-    selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.09))
-    export_matches(selected_sample, "../data/sample.csv")
+    # selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.09))
+    # export_matches(selected_sample, "../data/sample.csv")
+    print(calc_sample_stats(all_matches))
 
-    for w in range(1, 8):
-        w_sample = filter_matches_by_week(selected_sample, w)
-        export_matches(w_sample, "../data/sample_w" + str(w) + ".csv")
+    # for w in range(1, 8):
+    #     w_sample = filter_matches_by_week(selected_sample, w)
+    #     export_matches(w_sample, "../data/sample_w" + str(w) + ".csv")
