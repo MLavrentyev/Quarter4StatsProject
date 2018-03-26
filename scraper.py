@@ -10,7 +10,8 @@ tba_base_url = "https://www.thebluealliance.com/api/v3/"
 
 
 class MatchData:
-    def __init__(self, event_key, match_key, week, red_score, red_auto, blue_score, blue_auto):
+    def __init__(self, event_key, match_key, week, red_score, red_auto,
+                 blue_score, blue_auto, red_a_scale, blue_a_scale):
         self.event = event_key
         self.match = match_key
         self.week = int(week)
@@ -19,6 +20,8 @@ class MatchData:
         self.red_auto = int(red_auto)
         self.blue_score = int(blue_score)
         self.blue_auto = int(blue_auto)
+        self.red_a_scale = int(red_a_scale)
+        self.blue_a_scale = int(blue_a_scale)
 
         if self.red_score > self.blue_score:
             self.winner = "red"
@@ -34,6 +37,15 @@ class MatchData:
         else:
             self.auto_winner = "tie"
 
+        if self.red_a_scale > self.blue_a_scale:
+            self.a_scale_winner = "red"
+        elif self.blue_a_scale > self.red_a_scale:
+            self.a_scale_winner = "blue"
+        else:
+            self.a_scale_winner = "tie"
+
+        self.a_scale_win_match = self.winner == self.a_scale_winner and \
+                                 self.a_scale_winner != "tie" and self.auto_winner != "tie"
         self.winners_match = self.winner == self.auto_winner and self.winner != "tie" and self.auto_winner != "tie"
 
         if self.red_score - self.red_auto > self.blue_score - self.blue_auto:
@@ -84,10 +96,13 @@ def get_all_matches(events):
             match_key = match["key"]
             red_score = match["score_breakdown"]["red"]["totalPoints"]
             red_auto = match["score_breakdown"]["red"]["autoPoints"]
+            red_s_auto = match["score_breakdown"]["red"]["autoScaleOwnershipSec"] * 2
             blue_score = match["score_breakdown"]["blue"]["totalPoints"]
             blue_auto = match["score_breakdown"]["blue"]["autoPoints"]
+            blue_s_auto = match["score_breakdown"]["blue"]["autoScaleOwnershipSec"] * 2
 
-            all_matches.append(MatchData(event.key, match_key, event.week, red_score, red_auto, blue_score, blue_auto))
+            all_matches.append(MatchData(event.key, match_key, event.week, red_score, red_auto,
+                                         blue_score, blue_auto, red_s_auto, blue_s_auto))
 
     return all_matches
 
@@ -100,11 +115,14 @@ def calc_sample_stats(matches):
     n = len(matches)
     num_same_winners = 0
     num_decided_by_auto = 0
+    num_scale_same_win = 0
     for match in matches:
         if match.winners_match:
             num_same_winners += 1
         if match.decided_by_auto:
             num_decided_by_auto += 1
+        if match.a_scale_win_match:
+            num_scale_same_win += 1
 
     p_same = num_same_winners / n
     q_same = 1 - p_same
@@ -114,7 +132,11 @@ def calc_sample_stats(matches):
     q_dec = 1 - p_dec
     std_err_dec = sqrt(p_dec * q_dec / n)
 
-    return n, (p_same, q_same, std_err_same), (p_dec, q_dec, std_err_dec)
+    p_scs = num_scale_same_win / n
+    q_scs = 1 - p_scs
+    std_err_scs = sqrt(p_scs * q_scs / n)
+
+    return n, (p_same, q_same, std_err_same), (p_dec, q_dec, std_err_dec), (p_scs, q_scs, std_err_scs)
 
 
 def filter_matches_by_week(matches, week):
@@ -130,7 +152,7 @@ def import_matches(path):
         reader = csv.reader(file)
         next(reader)
         for row in reader:
-            matches.append(MatchData(*row[:7]))
+            matches.append(MatchData(*row[:9]))
 
     return matches
 
@@ -142,7 +164,7 @@ def export_matches(matches, path):
     with open(path, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["event", "match", "week",
-                         "red_score", "red_auto", "blue_score", "blue_auto",
+                         "red_score", "red_auto", "blue_score", "blue_auto", "red_a_scale", "blue_a_scale",
                          "winner", "auto_winner", "winners_match", "decided_by_auto"])
 
         for match in matches:
