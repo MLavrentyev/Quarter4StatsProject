@@ -116,6 +116,7 @@ def calc_sample_stats(matches):
     num_same_winners = 0
     num_decided_by_auto = 0
     num_scale_same_win = 0
+    num_scale_ties = 0
     for match in matches:
         if match.winners_match:
             num_same_winners += 1
@@ -123,6 +124,8 @@ def calc_sample_stats(matches):
             num_decided_by_auto += 1
         if match.a_scale_win_match:
             num_scale_same_win += 1
+        if match.a_scale_winner == "tie":
+            num_scale_ties += 1
 
     p_same = num_same_winners / n
     q_same = 1 - p_same
@@ -136,7 +139,15 @@ def calc_sample_stats(matches):
     q_scs = 1 - p_scs
     std_err_scs = sqrt(p_scs * q_scs / n)
 
-    return n, (p_same, q_same, std_err_same), (p_dec, q_dec, std_err_dec), (p_scs, q_scs, std_err_scs)
+    p_st = num_scale_ties / n
+    q_st = 1 - p_st
+    std_err_st = sqrt(p_st * q_st  / n)
+
+    return (n,
+            (p_same, q_same, std_err_same),
+            (p_dec, q_dec, std_err_dec),
+            (p_scs, q_scs, std_err_scs),
+            (p_st, q_st, std_err_st))
 
 
 def filter_matches_by_week(matches, week):
@@ -173,15 +184,15 @@ def export_matches(matches, path):
 
 
 if __name__ == "__main__":
-    all_matches = import_matches("../data/all_matches.csv")
-    # all_events = get_completed_events(2018)
-    # all_matches = get_all_matches(all_events)
-    # export_matches(all_matches, "../data/all_matches.csv")
+    # all_matches = import_matches("../data/playground/all_matches.csv")
+    all_events = get_completed_events(2018)
+    all_matches = get_all_matches(all_events)
+    export_matches(all_matches, "../data/playground/all_matches.csv")
 
-    # selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.09))
-    # export_matches(selected_sample, "../data/sample.csv")
-    print(calc_sample_stats(all_matches))
+    selected_sample = pick_random_matches(all_matches, int(len(all_matches)*0.09))
+    export_matches(selected_sample, "../data/playground/sample.csv")
+    # print(calc_sample_stats(all_matches))
 
     # for w in range(1, 8):
     #     w_sample = filter_matches_by_week(selected_sample, w)
-    #     export_matches(w_sample, "../data/sample_w" + str(w) + ".csv")
+    #     export_matches(w_sample, "../data/playground/sample_w" + str(w) + ".csv")
